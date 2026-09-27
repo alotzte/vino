@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.DS_Store
+# каталог и выгрузка организаторов, раздаются отдельно
+data/
+*.index
+*.npy
+var/
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+experiments/
+research/
+cv-assets/
+scan-log/

@@ -1,0 +1,18 @@
+# в образ едет только код, каталог и веса монтируются томами
+data/
+research/
+experiments/
+cv-assets/
+scan-log/
+
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+frontend/node_modules/
+frontend/dist/
+
+.git/
+.env
+.DS_Store

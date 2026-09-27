@@ -1,0 +1,85 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: vino-scanner
+    image: vino-api:v4
+    restart: unless-stopped
+    environment:
+      VINO_DATA_DIR: /srv/data/wines-svoe
+      VINO_APP_DB_PATH: /srv/app-state/app.db
+      VINO_SCAN_LOG: ${VINO_SCAN_LOG:-1}
+      VINO_SCAN_LOG_DIR: /srv/scan-log
+      VINO_ROOT_PATH: ${VINO_ROOT_PATH:-/vino}
+      VINO_ENGINE: ${VINO_ENGINE:-remote}
+      VINO_CV_URL: http://cv:8000
+      VINO_CV_TIMEOUT: ${VINO_CV_TIMEOUT:-8}
+      # Косинус LoRA-SigLIP, влияет только на экран "не найдено", в flat=1 не применяется
+      VINO_CONFIDENCE_THRESHOLD: ${VINO_CONFIDENCE_THRESHOLD:-0.680}
+      VINO_LLM_API_KEY: ${VINO_LLM_API_KEY:-}
+      # Мини-приложение MAX (docs/MAX.md): без токена initData не проверяется
+      # и профиль живёт на X-Device-Id, как в обычном браузере
+      VINO_MAX_BOT_TOKEN: ${VINO_MAX_BOT_TOKEN:-}
+      VINO_MAX_BOT_NAME: ${VINO_MAX_BOT_NAME:-}
+    volumes:
+      # Каталог "Своё Вино" (дамп + эталонные фото) - только на чтение
+      - ./data:/srv/data:ro
+      # Профиль/история/оценки/ачивки - писуемая БД, отдельно от read-only каталога
+      - app-state:/srv/app-state
+      # Загруженные фото и журнал распознавания (uploads.db), смотреть прямо с хоста
+      - ./scan-log:/srv/scan-log
+    ports:
+      # 109 - внешний порт для FRP-туннеля, 8000 - uvicorn внутри контейнера
+      - "109:8000"
+      # 8109 - тот же сервис для локального браузера: Chrome/Edge блокируют 109
+      # как небезопасный порт (ERR_UNSAFE_PORT, это well-known порт pop2)
+      - "8109:8000"
+    depends_on:
+      cv:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Распознавание: YOLO → LoRA-SigLIP 2 → LightGlue. Наружу не публикуется,
+  # в него ходит только api по внутренней сети compose.
+  cv:
+    build:
+      context: .
+      dockerfile: cv/Dockerfile
+    container_name: vino-cv
+    image: vino-cv:v1
+    restart: unless-stopped
+    environment:
+      # GPU0 делят чужие процессы, у сервиса своя карта
+      CUDA_VISIBLE_DEVICES: "1"
+      VINO_CV_ASSETS: /assets
+      VINO_CV_TOP_K: ${VINO_CV_TOP_K:-20}
+      VINO_CV_GEO_W: ${VINO_CV_GEO_W:-0.5}
+      VINO_CV_GEO_CAP: ${VINO_CV_GEO_CAP:-200}
+      # Ч/б-гейт выключен: на фото с витрины режет 9% кадров
+      VINO_CV_SAT_GATE: ${VINO_CV_SAT_GATE:-0}
+      # Проба поворотов на фото с витрины ничего не добавляет
+      VINO_CV_ROTATION_PROBE: ${VINO_CV_ROTATION_PROBE:-0}
+    volumes:
+      # Веса и индекс эталонов, 4.6 ГБ. Собирается app.build_index, см. docs/DEPLOY.md
+      - ./cv-assets:/assets:ro
+      - ./data:/srv/data:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      # Холодный старт - чтение 4.3 ГБ весов с диска; на прогретом кеше 5 с
+      start_period: 120s
+
+volumes:
+  app-state:

@@ -1,0 +1,18 @@
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+# Версии зафиксированы по замерам качества, не обновлять без перепроверки
+torch==2.11.0+cu128
+torchvision==0.26.0+cu128
+transformers==5.17.0
+kornia==0.8.3
+pydegensac==0.3.0
+ultralytics==8.4.155
+opencv-python-headless==5.0.0.93
+numpy==2.5.3
+pillow==12.3.0
+pillow-heif==1.7.0
+# Без pi-heif ultralytics ставит его сам внутри первого запроса - 19 с ожидания
+pi-heif==1.4.0
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+python-multipart==0.0.20
