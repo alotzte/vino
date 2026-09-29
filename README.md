@@ -6,6 +6,7 @@
 
 - Демо: https://app.nektarum.ru/vino/
 - Swagger: https://app.nektarum.ru/vino/docs
+- Презентация: [`presentation/Nektarum.pptx`](presentation/Nektarum.pptx)
 - ТЗ: `RSHB_Svoe_Vino_TZ.md`, архитектура: `ARCHITECTURE.md`
 
 ## Результаты
