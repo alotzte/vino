@@ -5,6 +5,7 @@
 карточку, а дальше предлагает сомелье, ачивки, уроки и карту виноделен.
 
 - Демо: https://app.nektarum.ru/vino/
+- Бот в MAX: https://max.ru/id3100049037_bot
 - Swagger: https://app.nektarum.ru/vino/docs
 - Презентация: [`presentation/Nektarum.pptx`](presentation/Nektarum.pptx)
 - ТЗ: `RSHB_Svoe_Vino_TZ.md`, архитектура: `ARCHITECTURE.md`
